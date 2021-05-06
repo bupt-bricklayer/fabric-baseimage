@@ -57,16 +57,23 @@ DEPENDENT_IMAGES = couchdb kafka zookeeper
 DUMMY = .$(DOCKER_TAG)
 
 # 这是Makefile的语法
-# target：依赖项
+# target：目标
 # (tab键)命令行
 # Makefile只会执行一条target语句。可以在make命令后指定需要执行的target，这个文件的第8行给出了本文件所有的target
 # 如果make后缺省命令，则只会执行第一条target（从上往下），例如这个文档中会执行all
 all: docker dependent-images
 
+# 由docker目标调用此目标
+# %可能是baseos或者baseimage
 build/docker/%/$(DUMMY):
+	# eval可以理成变量的定义
+	# ${@}代表所有目标项，这里只有一项，为build/docker/baseos/$(DUMMY)或者build/docker/baseimage/$(DUMMY)
 	$(eval TARGET = ${patsubst build/docker/%/$(DUMMY),%,${@}})
 	$(eval DOCKER_NAME = $(BASENAME)-$(TARGET))
+	# $(@D)表示$@的目录部分
+	# 如果@在命令前，则命令不会被make显示
 	@mkdir -p $(@D)
+	# 这里TARGET只可能是baseos或者baseimage
 	@echo "Building docker $(TARGET)"
 	docker build -f config/$(TARGET)/Dockerfile \
 		-t $(DOCKER_NAME) \
@@ -80,6 +87,9 @@ build/docker/%/.push: build/docker/%/$(DUMMY)
 		--password=$(DOCKER_HUB_PASSWORD)
 	@docker push $(BASENAME)-$(patsubst build/docker/%/.push,%,$@):$(DOCKER_TAG)
 
+# patsubst 子串查找函数，有三个参数，在第三个参数中查找第一个参数并替换为第二个参数然后返回
+# %是通配符，类似linux中的*,当第二个参数中出现%后，会替换为第一个参数中%所匹配的内容
+# 下边语句作用是将$(DOCKER_IMAGES)替换成为build/docker/$(DOCKER_IMAGES)/$(DUMMY)
 docker: $(patsubst %,build/docker/%/$(DUMMY),$(DOCKER_IMAGES))
 
 install: $(patsubst %,build/docker/%/.push,$(DOCKER_IMAGES))
