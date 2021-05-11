@@ -18,10 +18,11 @@ apt-get update -qq
 apt-get dist-upgrade -qqy
 
 # install common tools
-COMMON_TOOLS="wget git net-tools netcat-openbsd autoconf automake libtool curl make g++ unzip build-essential"
+COMMON_TOOLS="wget git net-tools netcat-openbsd autoconf automake libtool curl make g++ unzip build-essential sudo"
 #apt-get install -y git net-tools netcat-openbsd
 apt-get install -y $COMMON_TOOLS
 
+# 这里设置go的工作路径，无需修改
 # Set Go environment variables needed by other scripts
 export GOPATH="/opt/gopath"
 export GOROOT="/opt/go"
@@ -30,10 +31,16 @@ export GOROOT="/opt/go"
 # Install Golang
 # ----------------------------------------------------------------
 mkdir -p $GOPATH
-ARCH=`uname -m | sed 's|i686|386|' | sed 's|x86_64|amd64|'`
-BINTARGETS="x86_64 ppc64le s390x"
+# 这两个变量都是和架构有关的，可以看出并不包含arm64
+# 直接将ARCH改为arm64 BINTARGETS也改为arm64
+# go的版本暂时不动
+#ARCH=`uname -m | sed 's|i686|386|' | sed 's|x86_64|amd64|'`
+#BINTARGETS="x86_64 ppc64le s390x"
+ARCH=arm64
+BINTARGETS="arm64 aarch64"
 GO_VER=1.14.12
 
+# 前边几个变量改了之后这里就不动了
 # Install Golang binary if found in BINTARGETS
 if echo $BINTARGETS | grep -q `uname -m`; then
    cd /tmp
@@ -56,6 +63,7 @@ else
    apt-get -y remove golang-1.6
 fi
 
+# 修改环境变量，这里也不动
 PATH=$GOROOT/bin:$GOPATH/bin:$PATH
 
 cat <<EOF >/etc/profile.d/goroot.sh
@@ -69,8 +77,9 @@ EOF
 # ----------------------------------------------------------------
 NODE_VER=8.16.1
 NPM_VER=6.11.3
-
-ARCH=`uname -m | sed 's|i686|x86|' | sed 's|x86_64|x64|'`
+# 这里将ARCH改为arm64
+#ARCH=`uname -m | sed 's|i686|x86|' | sed 's|x86_64|x64|'`
+ARCH=arm64
 NODE_PKG=node-v$NODE_VER-linux-$ARCH.tar.gz
 SRC_PATH=/tmp/$NODE_PKG
 
@@ -95,7 +104,8 @@ PROTOBUF_VER=3.1.0
 PROTOBUF_PKG=v$PROTOBUF_VER.tar.gz
 
 cd /tmp
-wget --quiet https://github.com/google/protobuf/archive/$PROTOBUF_PKG
+# 由于网络原因事先将源码压缩包拷贝到/tmp下
+# wget --quiet https://github.com/protocolbuffers/protobuf/archive/refs/tags/$PROTOBUF_PKG
 tar xpzf $PROTOBUF_PKG
 cd protobuf-$PROTOBUF_VER
 ./autogen.sh
