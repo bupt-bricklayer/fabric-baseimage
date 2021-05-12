@@ -7,8 +7,9 @@
 FROM ubuntu:16.04
 # 这里将代码拷贝到容器里
 COPY scripts /tmp/scripts
-# 将protobuf源码拷贝进去，这里是因为学校的网没法访问GitHub，先在自己电脑上
-COPY protobuf-3.1.0.tar.gz /tmp
+# 将protobuf源码拷贝进去，这里是因为学校的网没法访问GitHub，先在自己电脑上下载好
+# https://github.com/protocolbuffers/protobuf/releases/tag/v3.1.0
+COPY protobuf-3.1.0.tar.gz /tmp/v3.1.0.tar.gz
 # 运行一些脚本，这些脚本中，所有涉及到计算机架构的内容都得进行修改
 RUN cd /tmp/scripts && \
     common/packages.sh && \
